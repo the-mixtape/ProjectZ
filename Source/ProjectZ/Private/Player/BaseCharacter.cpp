@@ -38,7 +38,7 @@ void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetupInput();
+	SetupPlayerSettings();
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
@@ -60,7 +60,19 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 		//Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABaseCharacter::Look);
+		
+		//Running
+		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Triggered, this, &ABaseCharacter::RunTriggered);
+		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Canceled, this, &ABaseCharacter::RunFinished);
+		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &ABaseCharacter::RunFinished);
 	}
+}
+
+void ABaseCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	
+	SetupInput();
 }
 
 void ABaseCharacter::SetupInput()
@@ -106,5 +118,35 @@ void ABaseCharacter::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+void ABaseCharacter::RunTriggered()
+{
+	SetMaxWalkSpeed(RunSpeed);
+}
+
+void ABaseCharacter::RunFinished()
+{	
+	SetMaxWalkSpeed(WalkSpeed);
+}
+
+void ABaseCharacter::SetupPlayerSettings()
+{
+	SetMaxWalkSpeed(WalkSpeed);
+}
+
+void ABaseCharacter::SetMaxWalkSpeed(float MaxWalkSpeed)
+{
+	if(!HasAuthority())
+	{
+		ServerSetMaxWalkSpeed(MaxWalkSpeed);
+	}
+
+	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
+}
+
+void ABaseCharacter::ServerSetMaxWalkSpeed_Implementation(float MaxWalkSpeed)
+{
+	SetMaxWalkSpeed(MaxWalkSpeed);
 }
 

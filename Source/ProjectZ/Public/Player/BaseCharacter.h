@@ -14,6 +14,15 @@ class UInputMappingContext;
 class UInputAction;
 
 
+UENUM(BlueprintType)
+enum class ELocomotionState : uint8
+{
+	ELS_Idle UMETA(DisplayName="Idle"),
+	ELS_Walk UMETA(DisplayName="Walk"),
+	ELS_Run UMETA(DisplayName="Run"),
+};
+
+
 UCLASS()
 class PROJECTZ_API ABaseCharacter : public ACharacter
 {
@@ -26,6 +35,15 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* Camera;
+#pragma endregion
+
+#pragma region PlayerSettings
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "PlayerSettings|Speed")
+	float WalkSpeed = 175.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "PlayerSettings|Speed")
+	float RunSpeed = 300.f;
 #pragma endregion 
 	
 	
@@ -36,6 +54,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void PossessedBy(AController* NewController) override;
 
 #pragma region Input
 private:
@@ -56,6 +75,11 @@ private:
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
+	
+	/** Run Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* RunAction;
+	
 
 protected:
 	/** Called for movement input */
@@ -64,6 +88,19 @@ protected:
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
 
-#pragma endregion 
+	/** Called for looking input */
+	void RunTriggered();
+
+	/** Called for looking input */
+	void RunFinished();
+#pragma endregion
+
+private:
+	void SetupPlayerSettings();
+	
+	void SetMaxWalkSpeed(float MaxWalkSpeed);
+
+	UFUNCTION(Server, Reliable)
+	void ServerSetMaxWalkSpeed(float MaxWalkSpeed);
 
 };
