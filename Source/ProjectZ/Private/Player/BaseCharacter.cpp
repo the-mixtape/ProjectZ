@@ -8,6 +8,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Net/UnrealNetwork.h"
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -31,7 +33,7 @@ ABaseCharacter::ABaseCharacter()
 	// Create a follow camera
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArmComponent, USpringArmComponent::SocketName);
-	Camera->bUsePawnControlRotation = false; 
+	Camera->bUsePawnControlRotation = false;
 }
 
 void ABaseCharacter::BeginPlay()
@@ -39,12 +41,14 @@ void ABaseCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	SetupPlayerSettings();
+	SetupInput();
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	UpdateReplicateVariables();
 }
 
 void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -72,7 +76,14 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	
-	SetupInput();
+}
+
+void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION(ABaseCharacter, InputVector, COND_SkipOwner);
+	DOREPLIFETIME_CONDITION(ABaseCharacter, MaxWalkSpeed, COND_SkipOwner);
 }
 
 void ABaseCharacter::SetupInput()
@@ -135,18 +146,43 @@ void ABaseCharacter::SetupPlayerSettings()
 	SetMaxWalkSpeed(WalkSpeed);
 }
 
-void ABaseCharacter::SetMaxWalkSpeed(float MaxWalkSpeed)
+void ABaseCharacter::SetMaxWalkSpeed(float InSpeed)
 {
 	if(!HasAuthority())
 	{
-		ServerSetMaxWalkSpeed(MaxWalkSpeed);
+		ServerSetMaxWalkSpeed(InSpeed);
 	}
 
-	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
+	MaxWalkSpeed = InSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = InSpeed;
 }
 
-void ABaseCharacter::ServerSetMaxWalkSpeed_Implementation(float MaxWalkSpeed)
+void ABaseCharacter::UpdateReplicateVariables()
 {
-	SetMaxWalkSpeed(MaxWalkSpeed);
+	if(!IsLocallyControlled()) return;
+	
+	FVector LastInput = GetCharacterMovement()->GetLastInputVector();
+	LastInput = UKismetMathLibrary::ClampVectorSize(LastInput, 0.0, 1.0);
+	SetInputVector(LastInput);
+}
+
+void ABaseCharacter::SetInputVector(FVector InVector)
+{
+	if(!HasAuthority())
+	{
+		SetServerInputVector(InVector);
+	}
+	
+	InputVector = InVector;
+}
+
+void ABaseCharacter::SetServerInputVector_Implementation(FVector InVector)
+{
+	SetInputVector(InVector);
+}
+
+void ABaseCharacter::ServerSetMaxWalkSpeed_Implementation(float InSpeed)
+{
+	SetMaxWalkSpeed(InSpeed);
 }
 

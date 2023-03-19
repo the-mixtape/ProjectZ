@@ -55,6 +55,7 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void PossessedBy(AController* NewController) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 #pragma region Input
 private:
@@ -98,9 +99,24 @@ protected:
 private:
 	void SetupPlayerSettings();
 	
-	void SetMaxWalkSpeed(float MaxWalkSpeed);
+	void SetMaxWalkSpeed(float InSpeed);
 
 	UFUNCTION(Server, Reliable)
-	void ServerSetMaxWalkSpeed(float MaxWalkSpeed);
+	void ServerSetMaxWalkSpeed(float InSpeed);
+
+public:
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	FVector InputVector;
+
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	float MaxWalkSpeed;
+
+private:
+	void UpdateReplicateVariables();
+
+	void SetInputVector(FVector InVector);
+
+	UFUNCTION(Server, Reliable)
+	void SetServerInputVector(FVector InVector);
 
 };
