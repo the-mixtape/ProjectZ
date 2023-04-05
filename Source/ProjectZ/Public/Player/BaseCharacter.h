@@ -119,4 +119,18 @@ private:
 	UFUNCTION(Server, Reliable)
 	void SetServerInputVector(FVector InVector);
 
+public:
+	UFUNCTION(BlueprintCallable)
+	void SetClientActorRotation(FRotator NewRotation);
+
+private:
+	UPROPERTY(ReplicatedUsing=OnActorRotation)
+	FRotator ReplicatedActorRotation;
+	
+	UFUNCTION(Server, Reliable)
+	void SetServerActorRotation(FRotator NewRotation);
+
+	UFUNCTION()
+	void OnActorRotation();
+
 };

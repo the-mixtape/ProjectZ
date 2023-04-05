@@ -84,6 +84,7 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 
 	DOREPLIFETIME_CONDITION(ABaseCharacter, InputVector, COND_SkipOwner);
 	DOREPLIFETIME_CONDITION(ABaseCharacter, MaxWalkSpeed, COND_SkipOwner);
+	DOREPLIFETIME_CONDITION(ABaseCharacter, ReplicatedActorRotation, COND_SkipOwner);
 }
 
 void ABaseCharacter::SetupInput()
@@ -174,6 +175,25 @@ void ABaseCharacter::SetInputVector(FVector InVector)
 	}
 	
 	InputVector = InVector;
+}
+
+void ABaseCharacter::SetClientActorRotation(FRotator NewRotation)
+{
+	if(!IsLocallyControlled()) return;
+
+	SetActorRotation(NewRotation);
+	SetServerActorRotation(NewRotation);
+}
+
+void ABaseCharacter::OnActorRotation()
+{
+	SetActorRotation(ReplicatedActorRotation);
+}
+
+void ABaseCharacter::SetServerActorRotation_Implementation(FRotator NewRotation)
+{
+	ReplicatedActorRotation = NewRotation;
+	SetActorRotation(NewRotation);
 }
 
 void ABaseCharacter::SetServerInputVector_Implementation(FVector InVector)
