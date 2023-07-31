@@ -46,7 +46,6 @@ protected:
 	float RunSpeed = 300.f;
 #pragma endregion 
 	
-	
 public:
 	ABaseCharacter();
 
