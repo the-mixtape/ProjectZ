@@ -17,9 +17,11 @@ class UInputAction;
 UENUM(BlueprintType)
 enum class ELocomotionState : uint8
 {
+	ELS_Crouch UMETA(DisplayName="Crouch"),
 	ELS_Idle UMETA(DisplayName="Idle"),
 	ELS_Walk UMETA(DisplayName="Walk"),
 	ELS_Run UMETA(DisplayName="Run"),
+	ELS_Jump UMETA(DisplayName="Jump"),
 };
 
 
@@ -57,6 +59,10 @@ protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 #pragma region Input
+public:
+	UPROPERTY(BlueprintReadWrite, Category = Input)
+	bool StartedJumping;
+	
 private:
 	void SetupInput();
 	
@@ -80,7 +86,10 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* RunAction;
 	
-
+public:
+	virtual void Jump() override;
+	virtual void Landed(const FHitResult& Hit) override;
+	
 protected:
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
@@ -88,11 +97,15 @@ protected:
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
 
-	/** Called for looking input */
+	/** Called for running input */
 	void RunTriggered();
 
-	/** Called for looking input */
+	/** Called for running input finished */
 	void RunFinished();
+
+	/** Called for jump input */
+	void JumpTriggered();
+	
 #pragma endregion
 
 private:

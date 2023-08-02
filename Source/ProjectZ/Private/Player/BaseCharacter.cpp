@@ -56,7 +56,7 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent)) {
 		
 		//Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ABaseCharacter::JumpTriggered);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		//Moving
@@ -95,6 +95,21 @@ void ABaseCharacter::SetupInput()
 		{
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
+	}
+}
+
+void ABaseCharacter::Jump()
+{
+	Super::Jump();
+	// StartedJumping = false;
+}
+
+void ABaseCharacter::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+	if(StartedJumping)
+	{
+		StartedJumping = false;	
 	}
 }
 
@@ -140,6 +155,13 @@ void ABaseCharacter::RunTriggered()
 void ABaseCharacter::RunFinished()
 {	
 	SetMaxWalkSpeed(WalkSpeed);
+}
+
+void ABaseCharacter::JumpTriggered()
+{
+	if(GetCharacterMovement()->IsFalling()) return;
+
+	StartedJumping = true;
 }
 
 void ABaseCharacter::SetupPlayerSettings()
